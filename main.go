@@ -4,6 +4,11 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"strings"
+	"net/smtp"
+	"os"
+	"io/ioutil"
+	"encoding/json"
+	"time"
 )
 
 /**
@@ -15,15 +20,43 @@ import (
 	div class=content <<- здесь лежит нужное сообщение и иногда лишний html код (например, картинка)
  */
 
-func main() {
-	//"https://forum.awd.ru/viewtopic.php?f=326&t=326384&start=15900" <<- на этой странице "есть места", можно использовать для проверки парсера
-	htmlDoc, err := goquery.NewDocument("https://forum.awd.ru/viewtopic.php?f=326&t=326384&start=99999999999999") // start=99999999999999 написано для того, чтобы скрипт всегда попадал на последнюю страницу форума
-	if err != nil {
-		fmt.Printf("Err %v\n", err)
-		//TODO send to user
-	}
+var App Config
 
-	htmlDoc.Find("div").Each(onDivFound) //начинаем парсинг
+type Config struct {
+	USR string
+	PASS string
+	Delay int64
+	MailArr []string
+}
+
+
+func main() {
+
+	file,err:=os.Open("config.json")
+	if err!=nil{
+		fmt.Println(err)
+	}
+	byte,err:=ioutil.ReadAll(file)
+	if err!=nil{
+		fmt.Println(err)
+	}
+	err = json.Unmarshal(byte,&App)
+	fmt.Println(App)
+
+	sendMail("Сервер Запущен\n Хорошего дня, удачи в поисках мест на визу")
+
+	setTimeOut(func(){
+		htmlDoc, err := goquery.NewDocument("https://forum.awd.ru/viewtopic.php?f=326&t=326384&start=999999999999999") // start=99999999999999 написано для того, чтобы скрипт всегда попадал на последнюю страницу форума
+		if err != nil {
+			fmt.Printf("Err %v\n", err)
+			sendMail("Проблемы с парсингом, нужно проверить сервер!")
+		}
+
+		htmlDoc.Find("div").Each(onDivFound) //начинаем парсинг
+	})
+
+	//"https://forum.awd.ru/viewtopic.php?f=326&t=326384&start=15900" <<- на этой странице "есть места", можно использовать для проверки парсера
+
 }
 
 func onDivFound(_ int, selection *goquery.Selection) {
@@ -74,9 +107,27 @@ func onContentFound(selection *goquery.Selection) {
 
 			vitalMessage := strings.TrimSpace(html)
 			fmt.Println("АТАНШЕН")
-			fmt.Println(vitalMessage)
-			fmt.Println()
-			//TODO send message to user
+			msg:=fmt.Sprintf("Мы нашли места! \n\n\n %s", vitalMessage)
+			sendMail(msg)
 		}
+	}
+}
+
+func sendMail(msg string){
+	auth := smtp.PlainAuth("", App.USR, App.PASS,"smtp.gmail.com")
+	for _, mail:=range App.MailArr{
+		fmt.Println(mail)
+		err := smtp.SendMail("smtp.gmail.com:587", auth, "nazemnov.g.a@gmail.com", []string{mail}, []byte(msg))
+		if err != nil {
+			fmt.Printf("Err when send email : %v\n", err)
+		}
+	}
+}
+
+
+func setTimeOut(handler func()) {
+	for {
+		handler()
+		time.Sleep(10 * time.Minute)
 	}
 }
