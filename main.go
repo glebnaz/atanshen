@@ -117,7 +117,7 @@ func sendMail(msg string){
 	auth := smtp.PlainAuth("", App.USR, App.PASS,"smtp.gmail.com")
 	for _, mail:=range App.MailArr{
 		fmt.Println(mail)
-		err := smtp.SendMail("smtp.gmail.com:587", auth, "nazemnov.g.a@gmail.com", []string{mail}, []byte(msg))
+		err := smtp.SendMail("smtp.gmail.com:587", auth, App.USR, []string{mail}, []byte(msg))
 		if err != nil {
 			fmt.Printf("Err when send email : %v\n", err)
 		}
