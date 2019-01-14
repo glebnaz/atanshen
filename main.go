@@ -44,7 +44,7 @@ func main() {
 	err = json.Unmarshal(byte, &App)
 	fmt.Println(App)
 
-	sendEmail("Сервер Запущен\n Хорошего дня, удачи в поисках мест на визу")
+	sendEmail("Атаншен-сервер запущен\n Хорошего дня, удачи в поисках мест на визу, у тебя все получится, неси добро в своем сердце, люби друзей и маму :3 (папу забудь)")
 
 	setTimeOut(func() {
 		htmlDoc, err := goquery.NewDocument("https://forum.awd.ru/viewtopic.php?f=326&t=326384&start=999999999999") // start=99999999999999 написано для того, чтобы скрипт всегда попадал на последнюю страницу форума
@@ -115,7 +115,7 @@ func onContentFound(selection *goquery.Selection) {
 			if !isItSent {
 				alreadyParsedPosts = append(alreadyParsedPosts, vitalMessage)
 				fmt.Println("АТАНШЕН")
-				msg := fmt.Sprintf("Мы нашли места! \n\n\n %s", vitalMessage)
+				msg := fmt.Sprintf("Найдены места! \n\n\n %s", vitalMessage)
 				sendEmail(msg)
 			}
 		}
