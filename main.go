@@ -30,6 +30,8 @@ type Config struct {
 }
 
 
+var PostArr []string
+
 func main() {
 
 	file,err:=os.Open("config.json")
@@ -46,7 +48,7 @@ func main() {
 	sendMail("Сервер Запущен\n Хорошего дня, удачи в поисках мест на визу")
 
 	setTimeOut(func(){
-		htmlDoc, err := goquery.NewDocument("https://forum.awd.ru/viewtopic.php?f=326&t=326384&start=999999999999999") // start=99999999999999 написано для того, чтобы скрипт всегда попадал на последнюю страницу форума
+		htmlDoc, err := goquery.NewDocument("https://forum.awd.ru/viewtopic.php?f=326&t=326384&start=999999999999") // start=99999999999999 написано для того, чтобы скрипт всегда попадал на последнюю страницу форума
 		if err != nil {
 			fmt.Printf("Err %v\n", err)
 			sendMail("Проблемы с парсингом, нужно проверить сервер!")
@@ -104,11 +106,19 @@ func onContentFound(selection *goquery.Selection) {
 		contains = strings.Contains(htmlLowerCase, "нет мест")
 		if !contains {
 			//значит есть места или кто-то решил написать на форуме что-то особенное (что маловероятно)
-
+			isitSend := false
 			vitalMessage := strings.TrimSpace(html)
-			fmt.Println("АТАНШЕН")
-			msg:=fmt.Sprintf("Мы нашли места! \n\n\n %s", vitalMessage)
-			sendMail(msg)
+			for i,_ := range PostArr{
+				if vitalMessage == PostArr[i] {
+					isitSend = true
+				}
+			}
+			if !isitSend{
+				PostArr = append(PostArr, vitalMessage)
+				fmt.Println("АТАНШЕН")
+				msg:=fmt.Sprintf("Мы нашли места! \n\n\n %s", vitalMessage)
+				sendMail(msg)
+			}
 		}
 	}
 }
@@ -128,6 +138,6 @@ func sendMail(msg string){
 func setTimeOut(handler func()) {
 	for {
 		handler()
-		time.Sleep(10 * time.Minute)
+		time.Sleep(1 * time.Minute)
 	}
 }
