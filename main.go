@@ -1,13 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	"strings"
+	"io/ioutil"
 	"net/smtp"
 	"os"
-	"io/ioutil"
-	"encoding/json"
+	"strings"
 	"time"
 )
 
@@ -23,35 +23,34 @@ import (
 var App Config
 
 type Config struct {
-	USR string
-	PASS string
-	Delay int64
+	USR     string
+	PASS    string
+	Delay   int64
 	MailArr []string
 }
 
-
-var PostArr []string
+var alreadyParsedPosts []string
 
 func main() {
 
-	file,err:=os.Open("config.json")
-	if err!=nil{
+	file, err := os.Open("config.json")
+	if err != nil {
 		fmt.Println(err)
 	}
-	byte,err:=ioutil.ReadAll(file)
-	if err!=nil{
+	byte, err := ioutil.ReadAll(file)
+	if err != nil {
 		fmt.Println(err)
 	}
-	err = json.Unmarshal(byte,&App)
+	err = json.Unmarshal(byte, &App)
 	fmt.Println(App)
 
-	sendMail("Сервер Запущен\n Хорошего дня, удачи в поисках мест на визу")
+	sendEmail("Сервер Запущен\n Хорошего дня, удачи в поисках мест на визу")
 
-	setTimeOut(func(){
+	setTimeOut(func() {
 		htmlDoc, err := goquery.NewDocument("https://forum.awd.ru/viewtopic.php?f=326&t=326384&start=999999999999") // start=99999999999999 написано для того, чтобы скрипт всегда попадал на последнюю страницу форума
 		if err != nil {
 			fmt.Printf("Err %v\n", err)
-			sendMail("Проблемы с парсингом, нужно проверить сервер!")
+			sendEmail("Проблемы с парсингом, нужно проверить сервер!")
 		}
 
 		htmlDoc.Find("div").Each(onDivFound) //начинаем парсинг
@@ -106,26 +105,26 @@ func onContentFound(selection *goquery.Selection) {
 		contains = strings.Contains(htmlLowerCase, "нет мест")
 		if !contains {
 			//значит есть места или кто-то решил написать на форуме что-то особенное (что маловероятно)
-			isitSend := false
+			isItSent := false
 			vitalMessage := strings.TrimSpace(html)
-			for i,_ := range PostArr{
-				if vitalMessage == PostArr[i] {
-					isitSend = true
+			for i := range alreadyParsedPosts {
+				if vitalMessage == alreadyParsedPosts[i] {
+					isItSent = true
 				}
 			}
-			if !isitSend{
-				PostArr = append(PostArr, vitalMessage)
+			if !isItSent {
+				alreadyParsedPosts = append(alreadyParsedPosts, vitalMessage)
 				fmt.Println("АТАНШЕН")
-				msg:=fmt.Sprintf("Мы нашли места! \n\n\n %s", vitalMessage)
-				sendMail(msg)
+				msg := fmt.Sprintf("Мы нашли места! \n\n\n %s", vitalMessage)
+				sendEmail(msg)
 			}
 		}
 	}
 }
 
-func sendMail(msg string){
-	auth := smtp.PlainAuth("", App.USR, App.PASS,"smtp.gmail.com")
-	for _, mail:=range App.MailArr{
+func sendEmail(msg string) {
+	auth := smtp.PlainAuth("", App.USR, App.PASS, "smtp.gmail.com")
+	for _, mail := range App.MailArr {
 		fmt.Println(mail)
 		err := smtp.SendMail("smtp.gmail.com:587", auth, App.USR, []string{mail}, []byte(msg))
 		if err != nil {
@@ -134,10 +133,9 @@ func sendMail(msg string){
 	}
 }
 
-
 func setTimeOut(handler func()) {
 	for {
 		handler()
-		time.Sleep(1 * time.Minute)
+		time.Sleep(3 * time.Minute)
 	}
 }
