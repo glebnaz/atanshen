@@ -12,13 +12,13 @@ import (
 )
 
 /**
-	Иерархия html документа, по которой производится поиск
+Иерархия html документа, по которой производится поиск
 
-	div class=post bg1 or class=post bg2
-	div class=inner
-	div class=postbody
-	div class=content <<- здесь лежит нужное сообщение и иногда лишний html код (например, картинка)
- */
+div class=post bg1 or class=post bg2
+div class=inner
+div class=postbody
+div class=content <<- здесь лежит нужное сообщение и иногда лишний html код (например, картинка)
+*/
 
 var App Config
 
@@ -50,7 +50,8 @@ func main() {
 		htmlDoc, err := goquery.NewDocument("https://forum.awd.ru/viewtopic.php?f=326&t=326384&start=99999999999999") // start=99999999999999 написано для того, чтобы скрипт всегда попадал на последнюю страницу форума
 		if err != nil {
 			fmt.Printf("Err %v\n", err)
-			sendEmail("Проблемы с парсингом, нужно проверить сервер!")
+			strErr := fmt.Sprintf("Проблемы с парсингом, нужно проверить сервер! Вот ошибка: %s", err.Error())
+			sendEmail(strErr)
 		}
 
 		htmlDoc.Find("div").Each(onDivFound) //начинаем парсинг
