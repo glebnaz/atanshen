@@ -101,6 +101,9 @@ func onContentFound(selection *goquery.Selection) {
 	htmlLowerCase := strings.ToLower(html)
 	isContains := strings.Contains(htmlLowerCase, "мест нет") ||
 		strings.Contains(htmlLowerCase, "нет мест") ||
+		strings.Contains(htmlLowerCase, "нет доступных мест") ||
+		strings.Contains(htmlLowerCase, "нет записи") ||
+		strings.Contains(htmlLowerCase, "записи нет") ||
 		strings.Contains(htmlLowerCase, "d2 в середине страницы") // это диалог на форуме
 	if isContains {
 		return // места не найдены, поэтому выходим из функции
